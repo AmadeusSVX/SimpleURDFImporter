@@ -143,7 +143,7 @@ namespace SimpleURDFImporter.Components
                 {
                     if (visual.material != null && visual.material.color != null)
                     {
-                        Material mat = new Material(defaultMaterial ?? Shader.Find("Standard"));
+                        Material mat = new Material(defaultMaterial != null ? defaultMaterial : new Material(Shader.Find("Standard")));
                         mat.color = visual.material.color.ToUnityColor();
                         renderer.material = mat;
                     }
@@ -157,7 +157,10 @@ namespace SimpleURDFImporter.Components
                 var collider = meshObject.GetComponent<Collider>();
                 if (collider != null)
                 {
-                    Destroy(collider);
+                    if (Application.isPlaying)
+                        Destroy(collider);
+                    else
+                        DestroyImmediate(collider);
                 }
             }
         }
@@ -247,6 +250,9 @@ namespace SimpleURDFImporter.Components
             
             GameObject parentObject = linkObjects[joint.parent];
             GameObject childObject = linkObjects[joint.child];
+            
+            // Set parent-child relationship
+            childObject.transform.SetParent(parentObject.transform);
             
             // Apply joint origin to child
             ApplyOrigin(childObject.transform, joint.origin);

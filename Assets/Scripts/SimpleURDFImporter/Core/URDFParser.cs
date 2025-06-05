@@ -155,13 +155,15 @@ namespace SimpleURDFImporter.Core
             var xyzAttr = originNode.Attributes["xyz"]?.Value;
             if (!string.IsNullOrEmpty(xyzAttr))
             {
-                origin.xyz = ParseVector3(xyzAttr);
+                var rosPosition = ParseVector3(xyzAttr);
+                origin.xyz = ConvertROSToUnityPosition(rosPosition);
             }
             
             var rpyAttr = originNode.Attributes["rpy"]?.Value;
             if (!string.IsNullOrEmpty(rpyAttr))
             {
-                origin.rpy = ParseVector3(rpyAttr);
+                var rosRotation = ParseVector3(rpyAttr);
+                origin.rpy = ConvertROSToUnityRotation(rosRotation);
             }
             
             return origin;
@@ -295,9 +297,10 @@ namespace SimpleURDFImporter.Core
             var axisNode = jointNode.SelectSingleNode("axis");
             if (axisNode != null)
             {
+                var rosAxis = ParseVector3(axisNode.Attributes["xyz"]?.Value);
                 joint.axis = new URDFAxis
                 {
-                    xyz = ParseVector3(axisNode.Attributes["xyz"]?.Value)
+                    xyz = ConvertROSToUnityAxis(rosAxis)
                 };
             }
             else
@@ -365,6 +368,32 @@ namespace SimpleURDFImporter.Core
                 values.Length > 1 ? ParseFloat(values[1], 0f) : 0f,
                 values.Length > 2 ? ParseFloat(values[2], 0f) : 0f
             );
+        }
+        
+        // Convert from ROS coordinate system (Z-up, right-handed) to Unity coordinate system (Y-up, left-handed)
+        private static Vector3 ConvertROSToUnityPosition(Vector3 rosPosition)
+        {
+            // ROS: X-forward, Y-left, Z-up
+            // Unity: X-right, Y-up, Z-forward
+            // Correct mapping: ROS(x,y,z) -> Unity(x,z,y) but with sign changes for handedness
+            return new Vector3(rosPosition.x, rosPosition.z, rosPosition.y);
+        }
+        
+        // Convert from ROS rotation (Roll-Pitch-Yaw) to Unity rotation
+        private static Vector3 ConvertROSToUnityRotation(Vector3 rosRPY)
+        {
+            // ROS uses Roll-Pitch-Yaw around X-Y-Z axes respectively
+            // Unity uses Euler angles in X-Y-Z order 
+            // Need to account for coordinate system transformation
+            // Note: Return in radians, ApplyOrigin will convert to degrees
+            return new Vector3(-rosRPY.y, -rosRPY.z, -rosRPY.x);
+        }
+        
+        // Convert axis vector from ROS to Unity
+        private static Vector3 ConvertROSToUnityAxis(Vector3 rosAxis)
+        {
+            // Same as position conversion
+            return new Vector3(rosAxis.x, rosAxis.z, rosAxis.y);
         }
         
         private static float ParseFloat(string value, float defaultValue)

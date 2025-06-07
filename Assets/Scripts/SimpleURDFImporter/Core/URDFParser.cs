@@ -389,7 +389,7 @@ namespace SimpleURDFImporter.Core
             // ROS Pitch (Y) -> Unity Pitch (-X) 
             // ROS Yaw (Z) -> Unity Yaw (Y)
             // Note: Return in radians, ApplyOrigin will convert to degrees
-            return new Vector3(-rosRPY.y, rosRPY.z, rosRPY.x);
+            return new Vector3(-rosRPY.x, rosRPY.z, -rosRPY.y);
         }
         
         // Convert axis vector from ROS to Unity
@@ -402,7 +402,7 @@ namespace SimpleURDFImporter.Core
             // ROS X (forward) → Unity Z (forward)
             // ROS Y (left) → Unity -X (right, but flipped for handedness)  
             // ROS Z (up) → Unity Y (up)
-            return new Vector3(-rosAxis.y, rosAxis.z, rosAxis.x);
+            return new Vector3(-rosAxis.x, rosAxis.z, -rosAxis.y);
         }
         
         private static float ParseFloat(string value, float defaultValue)

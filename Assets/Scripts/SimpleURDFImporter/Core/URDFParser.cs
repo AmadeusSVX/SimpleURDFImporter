@@ -384,16 +384,25 @@ namespace SimpleURDFImporter.Core
         {
             // ROS uses Roll-Pitch-Yaw around X-Y-Z axes respectively
             // Unity uses Euler angles in X-Y-Z order 
-            // Need to account for coordinate system transformation
+            // ROS to Unity axis mapping:
+            // ROS Roll (X) -> Unity Roll (Z)
+            // ROS Pitch (Y) -> Unity Pitch (-X) 
+            // ROS Yaw (Z) -> Unity Yaw (Y)
             // Note: Return in radians, ApplyOrigin will convert to degrees
-            return new Vector3(-rosRPY.y, -rosRPY.z, -rosRPY.x);
+            return new Vector3(-rosRPY.y, rosRPY.z, rosRPY.x);
         }
         
         // Convert axis vector from ROS to Unity
         private static Vector3 ConvertROSToUnityAxis(Vector3 rosAxis)
         {
-            // Same as position conversion
-            return new Vector3(rosAxis.x, rosAxis.z, rosAxis.y);
+            // ROS (right-handed): X-forward, Y-left, Z-up
+            // Unity (left-handed): X-right, Y-up, Z-forward
+            // 
+            // Coordinate transformation with handedness consideration:
+            // ROS X (forward) → Unity Z (forward)
+            // ROS Y (left) → Unity -X (right, but flipped for handedness)  
+            // ROS Z (up) → Unity Y (up)
+            return new Vector3(-rosAxis.y, rosAxis.z, rosAxis.x);
         }
         
         private static float ParseFloat(string value, float defaultValue)

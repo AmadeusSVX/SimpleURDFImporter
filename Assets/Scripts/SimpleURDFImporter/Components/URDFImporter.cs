@@ -130,7 +130,7 @@ namespace SimpleURDFImporter.Components
             visualObject.transform.SetParent(parent);
             ApplyOrigin(visualObject.transform, visual.origin);
             
-            GameObject meshObject = MeshLoader.CreatePrimitive(visual.geometry);
+            GameObject meshObject = MeshLoader.CreatePrimitive(visual.geometry, basePath);
             if (meshObject != null)
             {
                 meshObject.transform.SetParent(visualObject.transform);
@@ -173,7 +173,7 @@ namespace SimpleURDFImporter.Components
             collisionObject.transform.SetParent(parent);
             ApplyOrigin(collisionObject.transform, collision.origin);
             
-            GameObject meshObject = MeshLoader.CreatePrimitive(collision.geometry);
+            GameObject meshObject = MeshLoader.CreatePrimitive(collision.geometry, basePath);
             if (meshObject != null)
             {
                 meshObject.transform.SetParent(collisionObject.transform);
@@ -290,7 +290,18 @@ namespace SimpleURDFImporter.Components
         {
             var hingeJoint = child.AddComponent<HingeJoint>();
             hingeJoint.connectedBody = parent.GetComponent<Rigidbody>();
+            
+            // HingeJoint axis is in local space of the GameObject
+            // Set the anchor point at the origin (joint location)
+            hingeJoint.anchor = Vector3.zero;
+            
+            // The axis should be relative to the child's local coordinate system
             hingeJoint.axis = joint.axis.xyz;
+            
+            // Set connected anchor to the child's position relative to parent
+            hingeJoint.connectedAnchor = parent.transform.InverseTransformPoint(child.transform.position);
+            
+            Debug.Log($"Joint {joint.name}: ROS axis = {joint.axis.xyz}, Unity axis = {hingeJoint.axis}");
             
             if (joint.limit != null && joint.type == URDFJoint.JointType.Revolute)
             {
